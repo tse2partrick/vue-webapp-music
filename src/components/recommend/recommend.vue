@@ -1,6 +1,6 @@
 <template>
   <div class="recommend" ref="recommend">
-    <scroll class="recommend-content" :data="hotDisses" ref="scroll">
+    <scroll class="recommend-content" :data="hotDisses" ref="scroll" :probeType="probeType">
       <div>
         <div class="slider-wrapper" v-if="sliders.length > 0">
           <slider :sliders="sliders">
@@ -45,7 +45,7 @@
         sliders: [],
         hotDisses: [],
         allReady: -1,
-        listenScroll: true
+        probeType: 3
       }
     },
     created() {
@@ -53,6 +53,8 @@
       setTimeout(() => {
         this._getHotDiss()
       }, 1000)
+
+      this.scroll = {}
     },
     methods: {
       selectDiss(item) {
