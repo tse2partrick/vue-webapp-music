@@ -46,3 +46,11 @@ export function prefixStyle(el) {
 
   return vendor + el.charAt(0).toUpperCase() + el.substr(1)
 }
+
+export function getData(el, name, val) {
+  const prefix = 'data-'
+  if (val) {
+    return el.setAttribute(prefix + name, val)
+  }
+  return el.getAttribute(prefix + name)
+}
