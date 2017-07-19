@@ -17,7 +17,7 @@
             <img class="icon" v-lazy="item.imgurl">
             <div class="text">
               <h2 class="name">{{item.dissname}}</h2>
-              <p class="desc">{{item.author}}</p>
+              <p class="desc">{{item.creator.name}}</p>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@
       _getHotDiss() {
         getHotDiss().then((res) => {
           if (res.code === ERR_OK) {
-            this.hotDisses = res.data.hotdiss.list
+            this.hotDisses = res.data.list
             this.allReady += 1
           }
         })

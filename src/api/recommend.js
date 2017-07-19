@@ -1,5 +1,6 @@
 import jsonp from 'common/js/jsonp'
 import {commonParams, options} from './config'
+import axios from 'axios'
 
 export function getSlider() {
   const url = 'https://c.y.qq.com/musichall/fcgi-bin/fcg_yqqhomepagerecommend.fcg'
@@ -14,8 +15,9 @@ export function getSlider() {
 }
 
 export function getHotDiss() {
-  let url = 'https://c.y.qq.com/v8/fcg-bin/fcg_first_yqq.fcg'
-  let data = Object.assign({}, commonParams, {
+  // let url = 'https://c.y.qq.com/v8/fcg-bin/fcg_first_yqq.fcg'
+
+  /* let data = Object.assign({}, commonParams, {
     tpl: 'v12',
     page: 'other',
     loginUin: 0,
@@ -23,9 +25,26 @@ export function getHotDiss() {
     notice: 0,
     platform: 'yqq',
     needNewCode: 0
+  }) */
+
+  let url = '/api/hotDiss'
+  let data = Object.assign({}, commonParams, {
+    platform: 'yqq',
+    hostUin: 0,
+    sin: 0,
+    ein: 29,
+    sortId: 5,
+    needNewCode: 0,
+    categoryId: 10000000,
+    rnd: Math.random(),
+    format: 'json'
   })
 
-  return jsonp(url, data, options)
+  return axios.get(url, {
+    params: data
+  }).then((res) => {
+    return Promise.resolve(res.data)
+  })
 }
 
 export function getDissInfo(dissId) {
