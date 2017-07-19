@@ -51,10 +51,13 @@
     computed: {
       noResultTitle() {
         if (!this.noResult && this.end) {
-          return '已加载完毕'
-        } else {
+          return '没有更多了'
+        }
+        if (this.noResult) {
           return `对不起，没有找到关于"${this.query}"的结果`
         }
+
+        return ''
       }
     },
     methods: {
@@ -91,13 +94,19 @@
             this.searchResults = this.searchResults.concat(this._normalizeData(res.data))
           }
           let song = res.data.song
-          this.noResult = false
-          if (song.totalnum <= 0) {
+          /* this.noResult = false
+          this.hasMore = true
+          this.end = false */
+          if (song && song.totalnum <= 0) {
             this.noResult = true
+            this.end = true
+            this.hasMore = false
             return
           }
           if (song.curpage * this.perPage <= song.totalnum) {
             this.hasMore = true
+            this.end = false
+            this.noResult = false
           } else {
             this.hasMore = false
             this.end = true
@@ -126,7 +135,12 @@
       }
     },
     watch: {
-      query() {
+      query(val) {
+        if (!val) {
+          this.hasMore = true
+          this.searchResults = []
+          return
+        }
         this._search(false)
       }
     },

@@ -12,7 +12,7 @@
           <span class="desc" v-html="getDesc(song)"></span>
         </div>
       </li>
-      <loading v-show="hasMore"></loading>
+      <loading v-show="hasMore && !isTopList"></loading>
       <li class="item-no-more" v-show="!hasMore && noMoreShowFlag">没有更多了</li>
     </ul>
   </div>
@@ -33,7 +33,7 @@
       },
       hasMore: {
         type: Boolean,
-        default: true
+        default: false
       },
       noMoreShowFlag: {
         type: Boolean,

@@ -1,8 +1,10 @@
 <template>
   <div class="player" v-if="playList.length > 0">
-    <transition name="normal" @enter="enter" @after-enter="afterEnter" @leave="leave" @after-leave="afterLeave">
+    <transition name="normal" :duration="1000" @enter="enter" @afterEnter="afterEnter" @leave="leave" @afterLeave="afterLeave">
       <div class="normal-player" v-show="fullScreen">
-        <img class="background" :src="currentSong.albumimage" />
+        <div class="background">
+          <img width="100%" height="100%" :src="currentSong.albumimage" />
+        </div>
         <div class="top">
           <div class="back">
             <i class="icon-back" @click="back"></i>
@@ -180,41 +182,61 @@
         this.setFullScreen(true)
       },
       enter(el, done) {
-        let {x, y, scale} = this._getScaleAndPos()
         let animation = {
-          0: {
-            transform: `translate3d(${x}px, ${y}px, 0}) scale(${scale})`
+          100: {
+            transform: `translate3d(0,0,0) scale(1)`
           },
           60: {
-            transform: `translate3d(0, 0, 0) scale(1.3)`
+            transform: 'translate3d(0, 0, 0) scale(1.5)'
           },
-          100: {
-            transform: `translate3d(0, 0, 0) scale(1)`
+          0: {
+            transform: `translate3d(0, 0, 0) scale(0)`
           }
         }
+
         animations.registerAnimation({
-          name: 'move',
+          name: 'enter',
           animation,
           presets: {
-            duration: 300,
+            duration: 800,
             easing: 'linear'
           }
         })
-        animations.runAnimation(this.$refs.cdWrapper, 'move', done)
+
+        animations.runAnimation(this.$refs.cdWrapper, 'enter', done)
       },
       afterEnter() {
-        animations.unregisterAnimation('move')
+        animations.unregisterAnimation('enter')
         this.$refs.cdWrapper.style.animation = ''
       },
       leave(el, done) {
-        let {x, y, scale} = this._getScaleAndPos()
-        this.$refs.cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
-        this.$refs.cdWrapper.style['transition'] = 0.3 + 's'
-        this.$refs.cdWrapper.addEventListener('transitionend', done)
+        const {x, y} = this._getScaleAndPos()
+        let animation = {
+          0: {
+            transform: `translate3d(0,0,0) scale(1)`
+          },
+          60: {
+            transform: `translate3d(${x}px,${y}px,0) scale(0.2)`
+          },
+          100: {
+            transform: `translate3d(${x}px, ${y}px, 0) scale(0)`
+          }
+        }
+
+        animations.registerAnimation({
+          name: 'leave',
+          animation,
+          presets: {
+            duration: 400,
+            easing: 'linear'
+          }
+        })
+
+        animations.runAnimation(this.$refs.cdWrapper, 'leave', done)
       },
       afterLeave() {
-        this.$refs.cdWrapper.style[transform] = ''
-        this.$refs.cdWrapper.style['transition'] = ''
+        animations.unregisterAnimation('leave')
+        this.$refs.cdWrapper.style.animation = ''
       },
       togglePlaying() {
         if (!this.fileLoaded) {
@@ -310,6 +332,9 @@
         this.timeOnchanging = true
         this.currentTime = percent * this.currentSong.duration
         if (this.currentLyric) {
+          if (this.currentTime === 0) {
+            this.$refs.lyricList.scrollTo(0, 0, 0)
+          }
           this.currentLyric.seek(this.currentTime * 1000)
         }
       },
@@ -440,7 +465,6 @@
 
         let x = -(window.innerWidth / 2 - smallPaddingLeft)
         let y = window.innerHeight - bigPaddingTop - bigWidth / 2 - smallPaddingBottom
-
         return {
           x,
           y,
@@ -766,4 +790,25 @@
       transform: rotate(0)
     100%
       transform: rotate(360deg)
+  .enterActive
+    transition: all 1s
+    animation: cdEnter 1s
+  .leaveActive
+    transition: all 0.3s
+    animation: cdLeave 0.3s
+
+  @keyframes cdEnter
+    0%
+      transform: scale(0)
+    60%
+      transform: scale(1.3)
+    100%
+      transform: scale(1)
+  @keyframes cdLeave
+    0%
+      transform: translate3d(0, 0, 0) scale(1)
+    50%
+      transform: translate3d(-100px, 200px, 0) scale(0.5)
+    100%
+      transform: translate3d(-100px, 200px, 0px) scale(0)
 </style>

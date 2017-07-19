@@ -8,7 +8,7 @@
       <div class="play-wrapper">
         <div ref="playBtn" v-show="songs.length>0" class="play" @click="selectAll">
           <i class="icon-play"></i>
-          <span class="text">随机播放全部</span>
+          <span class="text">播放全部</span>
         </div>
       </div>
       <div class="filter" ref="filter"></div>
@@ -60,12 +60,15 @@
       hasMore: {
         type: Boolean,
         default: true
+      },
+      noMoreShowFlag: {
+        type: Boolean,
+        default: false
       }
     },
     data() {
       return {
         scrollY: 0,
-        noMoreShowFlag: true,
         pullUp: true
       }
     },
