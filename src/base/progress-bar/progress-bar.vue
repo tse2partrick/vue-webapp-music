@@ -45,6 +45,9 @@
         this._triggerMove(this.touch.percent)
       },
       onTouchStart(e) {
+        if (!this.fileLoaded) {
+          return
+        }
         this.touch.initiated = true
         this.touch.x1 = e.touches[0].pageX
         this.touch.left = this.$refs.progress.clientWidth

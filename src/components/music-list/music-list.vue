@@ -6,7 +6,7 @@
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="bgStyle" ref="bgImage">
       <div class="play-wrapper">
-        <div ref="playBtn" v-show="songs.length>0" class="play" @click="random">
+        <div ref="playBtn" v-show="songs.length>0" class="play" @click="selectAll">
           <i class="icon-play"></i>
           <span class="text">随机播放全部</span>
         </div>
@@ -15,7 +15,7 @@
     </div>
     <div class="bg-layer" ref="layer"></div>
     <scroll :data="songs" @scroll="scroll"
-            :listenScroll="listenScroll" :probeType="probeType" class="list" ref="list">
+            :listenScroll="listenScroll" :probeType="probeType" :pullUp="pullUp" @scrollToEnd="onScrollToEnd" class="list" ref="list">
       <div class="song-list-wrapper">
         <song-list :songs="songs" @selectItemPlay="selectItem" :isTopList="isTopList" :hasMore="hasMore" :noMoreShowFlag="noMoreShowFlag"></song-list>
       </div>
@@ -64,7 +64,9 @@
     },
     data() {
       return {
-        scrollY: 0
+        scrollY: 0,
+        noMoreShowFlag: true,
+        pullUp: true
       }
     },
     computed: {
@@ -82,6 +84,9 @@
       this.$refs.list.$el.style.top = `${this.imageHeight}px`
     },
     methods: {
+      onScrollToEnd() {
+        this.$emit('scrollToEnd')
+      },
       playListHandler(playlist) {
         const bottom = playlist.length > 0 ? '60px' : ''
         this.$refs.list.$el.style.bottom = bottom
@@ -98,11 +103,6 @@
       },
       selectAll() {
         this.selectPlayAll({
-          list: this.songs
-        })
-      },
-      random() {
-        this.randomPlay({
           list: this.songs
         })
       },

@@ -310,7 +310,7 @@
         this.timeOnchanging = true
         this.currentTime = percent * this.currentSong.duration
         if (this.currentLyric) {
-          this.currentLyric.seek(this.currentTime * 800)
+          this.currentLyric.seek(this.currentTime * 1000)
         }
       },
       loop() {
