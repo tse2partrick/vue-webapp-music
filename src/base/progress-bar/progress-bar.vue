@@ -11,6 +11,7 @@
 
 <script>
   import {prefixStyle} from 'common/js/dom'
+  import {mapGetters} from 'vuex'
 
   const transform = prefixStyle('transform')
   const BTN_WIDTH = 16
@@ -27,6 +28,11 @@
     },
     created() {
       this.touch = {}
+    },
+    computed: {
+      ...mapGetters([
+        'fullScreen'
+      ])
     },
     methods: {
       progressMove(percent) {
@@ -76,6 +82,9 @@
     watch: {
       percent(newPercent) {
         this.progressMove(newPercent)
+      },
+      fullScreen() {
+        this.progressMove(this.percent)
       }
     }
   }
