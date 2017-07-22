@@ -143,6 +143,10 @@
         if (this.playList.length - (3 + 1) > index) {
           index -= 2
         }
+
+        if (index < 0) {
+          index = 0
+        }
         setTimeout(() => {
           this.$refs.listContent.scrollToElement(this.$refs.item[index], 0, 0)
         }, 20)
@@ -164,6 +168,14 @@
         'delSong',
         'selectPlay'
       ])
+    },
+    watch: {
+      playList() {
+        setTimeout(() => {
+          this.$refs.listContent.refresh()
+        }, 2000)
+        console.log(this.$refs.listContent)
+      }
     },
     components: {
       Scroll,

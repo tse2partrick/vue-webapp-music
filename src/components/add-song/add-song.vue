@@ -68,7 +68,8 @@
     },
     computed: {
       ...mapGetters([
-        'playHistory'
+        'playHistory',
+        'playList'
       ])
     },
     methods: {
