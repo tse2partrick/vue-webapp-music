@@ -1,6 +1,6 @@
 <template>
   <div class="player" v-if="playList.length > 0">
-    <transition name="normal" :duration="1000" @enter="enter" @afterEnter="afterEnter" @leave="leave" @afterLeave="afterLeave">
+    <transition name="normal" @enter="enter" @after-enter="afterEnter" @leave="leave" @after-leave="afterLeave">
       <div class="normal-player" v-show="fullScreen">
         <div class="background">
           <img width="100%" height="100%" :src="currentSong.albumimage" />
@@ -120,6 +120,13 @@
         touch: {},
         noLyric: '此歌曲为没有歌词的纯音乐，请欣赏'
       }
+    },
+    created() {
+      window.addEventListener('keydown', (e) => {
+        if (e.keyCode === 32) {
+          this.togglePlaying()
+        }
+      })
     },
     computed: {
       cdCls() {
@@ -321,11 +328,11 @@
         this.timeOnchanging = false
         this.currentTime = percent * this.currentSong.duration
         this.$refs.audio.currentTime = this.currentTime
-        if (!this.playing) {
-          this.togglePlaying()
-        }
         if (this.currentLyric) {
           this.currentLyric.seek(this.currentTime * 1000)
+        }
+        if (!this.playing) {
+          this.togglePlaying()
         }
       },
       onChaning(percent) {

@@ -8,7 +8,7 @@
       <div class="play-wrapper">
         <div ref="playBtn" v-show="songs.length>0" class="play" @click="selectAll">
           <i class="icon-play"></i>
-          <span class="text">播放全部</span>
+          <span class="text">添加到播放列表</span>
         </div>
       </div>
       <div class="filter" ref="filter"></div>
@@ -22,6 +22,7 @@
       <div v-show="!songs.length" class="loading-container">
         <loading></loading>
       </div>
+      <top-suggest :title="topSuggestTitle" ref="topList"></top-suggest>
     </scroll>
   </div>
 </template>
@@ -32,7 +33,8 @@
   import SongList from 'base/song-list/song-list'
   import {prefixStyle} from 'common/js/dom'
   import {playListMixin} from 'common/js/mixins'
-  import {mapActions} from 'vuex'
+  import {mapActions, mapGetters} from 'vuex'
+  import TopSuggest from 'base/top-suggest/top-suggest'
 
   const RESERVED_HEIGHT = 40
   const transform = prefixStyle('transform')
@@ -69,13 +71,17 @@
     data() {
       return {
         scrollY: 0,
-        pullUp: true
+        pullUp: true,
+        topSuggestTitle: '添加成功'
       }
     },
     computed: {
       bgStyle() {
         return `background-image:url(${this.bgImage})`
-      }
+      },
+      ...mapGetters([
+        'playList'
+      ])
     },
     created() {
       this.probeType = 3
@@ -108,6 +114,7 @@
         this.selectPlayAll({
           list: this.songs
         })
+        this.$refs.topList.show()
       },
       ...mapActions([
         'selectPlay',
@@ -147,7 +154,8 @@
     components: {
       Scroll,
       Loading,
-      SongList
+      SongList,
+      TopSuggest
     }
   }
 </script>

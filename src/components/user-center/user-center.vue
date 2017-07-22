@@ -28,7 +28,7 @@
       <div class="no-result-wrapper" v-show="noResultShow">
         <no-results :title="noResultTitle"></no-results>
       </div>
-      <top-list :title="topListTitle" ref="topList"></top-list>
+      <top-suggest :title="topListTitle" ref="topList"></top-suggest>
     </div>
   </transition>
 </template>
@@ -41,7 +41,7 @@
   import SongList from 'base/song-list/song-list'
   import {playListMixin} from 'common/js/mixins'
   import Song from 'common/js/song'
-  import TopList from 'base/top-list/top-list'
+  import TopSuggest from 'base/top-suggest/top-suggest'
   export default {
     mixins: [playListMixin],
     data() {
@@ -116,7 +116,7 @@
       NoResults,
       Switches,
       SongList,
-      TopList
+      TopSuggest
     }
   }
 </script>

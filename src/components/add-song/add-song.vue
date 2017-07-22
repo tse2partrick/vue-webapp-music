@@ -30,7 +30,7 @@
       <div class="search-result" v-show="query">
         <suggest :query="query" @select="onSelect" @beforeScrollStart="onBeforeScrollStart" :showSinger="showSinger"></suggest>
       </div>
-      <top-list ref="topList"></top-list>
+      <top-suggest ref="topList"></top-suggest>
     </div>
   </transition>
 </template>
@@ -42,7 +42,7 @@
   import SongList from 'base/song-list/song-list'
   import Scroll from 'base/scroll/scroll'
   import SearchList from 'base/search-list/search-list'
-  import TopList from 'base/top-list/top-list'
+  import TopSuggest from 'base/top-suggest/top-suggest'
   import {searchMixin} from 'common/js/mixins'
   import {mapGetters, mapActions} from 'vuex'
   import Song from 'common/js/song'
@@ -111,7 +111,7 @@
       SongList,
       SearchList,
       Scroll,
-      TopList
+      TopSuggest
     }
   }
 </script>

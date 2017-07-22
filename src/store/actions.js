@@ -61,18 +61,25 @@ export function selectPlay({commit, state}, song) {
 }
 export function selectPlayAll({commit, state}, {list}) {
   let normalList = filter(state.sequenceList.slice().concat(list))
-  let index = _findIndex(normalList, list[0])
+  /* let index = state.playList.length ? _findIndex(normalList, list[state.currentIndex]) : _findIndex(normalList, list[0]) */
+  let index
+  // 如果已经有歌曲正在播放中，不要打断它，让它继续播放
+  if (!state.playList.length) {
+    index = _findIndex(normalList, list[0])
+    commit(types.SET_CURRENT_INDEX, index)
+  }
   let randomList
   if (state.mode === playMode.random) {
     let randomIndex = Math.ceil(Math.random() * 10)
     randomList = shuffle(normalList)
     index = _findIndex(randomList, list[randomIndex])
+    commit(types.SET_CURRENT_INDEX, index)
   }
 
   commit(types.SET_FULL_SCREEN, false)
   commit(types.SET_PLAYING, true)
   commit(types.SET_SEQUENCE_LIST, normalList)
-  commit(types.SET_CURRENT_INDEX, index)
+  // commit(types.SET_CURRENT_INDEX, index)
   randomList ? commit(types.SET_PLAY_LIST, randomList) : commit(types.SET_PLAY_LIST, normalList)
 }
 // 封印播放全部。。
