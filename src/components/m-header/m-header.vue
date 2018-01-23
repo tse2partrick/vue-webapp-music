@@ -1,7 +1,7 @@
 <template>
   <div class="m-header">
     <div class="icon"></div>
-    <div class="text">Chicken Music</div>
+    <h1 class="text">Music</h1>
     <router-link tag="div" class="mine" to="/user">
       <i class="icon-mine"></i>
     </router-link>
@@ -44,5 +44,8 @@
         display: block
         padding: 12px
         font-size: 20px
-        color: $color-theme
+        color: $color-text
+      &.router-link-active
+        .icon-mine
+          color: $color-theme
 </style>

@@ -1,49 +1,45 @@
 <template>
-  <div class="music-list">
-    <div class="back" @click="back">
+  <div class="music-list" ref="musicList">
+    <div class="back" @click="onBack" ref="back">
       <i class="icon-back"></i>
     </div>
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="bgStyle" ref="bgImage">
       <div class="play-wrapper">
-        <div ref="playBtn" v-show="songs.length>0" class="play" @click="selectAll">
+        <div class="play" ref="btnPlay" v-show="songs.length > 0" @click="playAll">
           <i class="icon-play"></i>
-          <span class="text">添加到播放列表</span>
+          <span class="text">开始播放全部</span>
         </div>
       </div>
-      <div class="filter" ref="filter"></div>
+      <div class="filter"></div>
     </div>
-    <div class="bg-layer" ref="layer"></div>
-    <scroll :data="songs" @scroll="scroll"
-            :listenScroll="listenScroll" :probeType="probeType" :pullUp="pullUp" @scrollToEnd="onScrollToEnd" class="list" ref="list">
-      <div class="song-list-wrapper">
-        <song-list :songs="songs" @selectItemPlay="selectItem" :isTopList="isTopList" :hasMore="hasMore" :noMoreShowFlag="noMoreShowFlag"></song-list>
+    <div class="bg-layer" ref="bgLayer"></div>
+    <scroll class="list" :data="songs" ref="list" :probeType="3" :listenScroll="true" @scroll="onScroll">
+      <div class="song-list-wrapper" ref="songListWrapper">
+        <song-list @selectSong="onSelectSong" :songs="songs" :rank-page="rankPage"></song-list>
       </div>
-      <div v-show="!songs.length" class="loading-container">
+      <div class="loading-container" v-show="!songs.length">
         <loading></loading>
       </div>
-      <top-suggest :title="topSuggestTitle" ref="topList"></top-suggest>
     </scroll>
   </div>
 </template>
 
 <script>
   import Scroll from 'base/scroll/scroll'
-  import Loading from 'base/loading/loading'
   import SongList from 'base/song-list/song-list'
-  import {prefixStyle} from 'common/js/dom'
-  import {playListMixin} from 'common/js/mixins'
-  import {mapActions, mapGetters} from 'vuex'
-  import TopSuggest from 'base/top-suggest/top-suggest'
-
-  const RESERVED_HEIGHT = 40
-  const transform = prefixStyle('transform')
-  const backdrop = prefixStyle('backdrop-filter')
+  import Loading from 'base/loading/loading'
+  import {mapActions} from 'vuex'
+  import {playingMixin} from 'common/js/mixin'
 
   export default {
-    mixins: [playListMixin],
+    mixins: [playingMixin],
     props: {
       bgImage: {
+        type: String,
+        default: ''
+      },
+      title: {
         type: String,
         default: ''
       },
@@ -51,111 +47,74 @@
         type: Array,
         default: []
       },
-      title: {
-        type: String,
-        default: ''
-      },
-      isTopList: {
-        type: Boolean,
-        default: false
-      },
-      hasMore: {
-        type: Boolean,
-        default: true
-      },
-      noMoreShowFlag: {
+      rankPage: {
         type: Boolean,
         default: false
       }
     },
-    data() {
-      return {
-        scrollY: 0,
-        pullUp: true,
-        topSuggestTitle: '添加成功'
-      }
+    mounted() {
+      this._setListTop()
+      this.$refs.bgImage.style.transform = 'scale(1)'
     },
     computed: {
       bgStyle() {
-        return `background-image:url(${this.bgImage})`
-      },
-      ...mapGetters([
-        'playList'
-      ])
-    },
-    created() {
-      this.probeType = 3
-      this.listenScroll = true
-    },
-    mounted() {
-      this.imageHeight = this.$refs.bgImage.clientHeight
-      this.minTransalteY = -this.imageHeight + RESERVED_HEIGHT
-      this.$refs.list.$el.style.top = `${this.imageHeight}px`
+        return `background-image: url(${this.bgImage})`
+      }
     },
     methods: {
-      onScrollToEnd() {
-        this.$emit('scrollToEnd')
-      },
-      playListHandler(playlist) {
-        const bottom = playlist.length > 0 ? '60px' : ''
-        this.$refs.list.$el.style.bottom = bottom
-        this.$refs.list.refresh()
-      },
-      scroll(pos) {
-        this.scrollY = pos.y
-      },
-      back() {
-        this.$router.back()
-      },
-      selectItem(song, index) {
-        this.selectPlay(song)
-      },
-      selectAll() {
-        this.selectPlayAll({
-          list: this.songs
+      playAll() {
+        this.selectSong({
+          list: this.songs,
+          song: '',
+          index: 0
         })
-        this.$refs.topList.show()
       },
-      ...mapActions([
-        'selectPlay',
-        'selectPlayAll'
-      ])
-    },
-    watch: {
-      scrollY(newVal) {
-        let translateY = Math.max(this.minTransalteY, newVal)
-        let scale = 1
-        let zIndex = 0
-        let blur = 0
-        const percent = Math.abs(newVal / this.imageHeight)
-        if (newVal > 0) {
-          scale = 1 + percent
-          zIndex = 10
+      onSelectSong(song, index) {
+        this.selectSong({
+          list: this.songs,
+          song,
+          index
+        })
+      },
+      onScroll(pos) {
+        this.scrollY = pos.y
+        if (Math.abs(this.scrollY) <= this.maxTop) {
+          this.$refs.bgLayer.style.transform = `translate3d(0, ${this.scrollY}px, 0)`
+          this.$refs.bgImage.style.zIndex = ''
+          this.$refs.bgImage.style.paddingTop = ''
+          this.$refs.btnPlay.style.display = ''
         } else {
-          blur = Math.min(20, percent * 20)
+          this.$refs.bgImage.style.zIndex = 10
+          this.$refs.bgImage.style.paddingTop = this.$refs.back.clientHeight + 'px'
+          this.$refs.btnPlay.style.display = 'none'
         }
 
-        this.$refs.layer.style[transform] = `translate3d(0,${translateY}px,0)`
-        this.$refs.filter.style[backdrop] = `blur(${blur}px)`
-        if (newVal < this.minTransalteY) {
-          zIndex = 10
-          this.$refs.bgImage.style.paddingTop = 0
-          this.$refs.bgImage.style.height = `${RESERVED_HEIGHT}px`
-          this.$refs.playBtn.style.display = 'none'
-        } else {
-          this.$refs.bgImage.style.paddingTop = '70%'
-          this.$refs.bgImage.style.height = 0
-          this.$refs.playBtn.style.display = ''
+        if (this.scrollY > 0) {
+          let scaleVal = 1 + this.scrollY / this.$refs.bgImage.clientHeight
+          this.$refs.bgImage.style.transform = `scale(${scaleVal})`
+          this.$refs.bgImage.style.zIndex = 10
         }
-        this.$refs.bgImage.style[transform] = `scale(${scale})`
-        this.$refs.bgImage.style.zIndex = zIndex
-      }
+      },
+      onBack() {
+        this.$router.go(-1)
+      },
+      _setListTop() {
+        this.$refs.list.$el.style.top = this.$refs.bgImage.clientHeight + 'px'
+
+        this.maxTop = this.$refs.bgImage.clientHeight - this.$refs.back.clientHeight
+      },
+      _calcView(sequenceList) {
+        this.$refs.musicList.style.bottom = sequenceList.length > 0 ? '60px' : ''
+        this.$refs.list._refresh()
+      },
+      ...mapActions([
+        'selectSong'
+      ])
     },
     components: {
       Scroll,
-      Loading,
       SongList,
-      TopSuggest
+      Loading
     }
   }
 </script>
@@ -172,6 +131,9 @@
     bottom: 0
     right: 0
     background: $color-background
+    .black-shade
+      width: 100%
+      background: $color-background
     .back
       position absolute
       top: 0

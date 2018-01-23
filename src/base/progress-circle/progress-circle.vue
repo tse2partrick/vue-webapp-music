@@ -1,8 +1,9 @@
 <template>
   <div class="progress-circle">
-    <svg :width="radius" :height="radius" viewBox="0 0 100 100">
-      <circle class="progress-background" r="50" cx="50" cy="50" fill="transparent" />
-      <circle class="progress-bar" r="50" cx="50" cy="50" fill="transparent" :stroke-dasharray="dashArray" :stroke-dashoffset="dashOffset"  />
+    <svg width="32" height="32" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
+      <circle class="progress-background" :r="radius" cx="50" cy="50" fill="transparent"/>
+      <circle class="progress-bar" :r="radius" cx="50" cy="50" fill="transparent" :stroke-dasharray="dashArray"
+              :stroke-dashoffset="dashOffset"/>
     </svg>
     <slot></slot>
   </div>
@@ -13,25 +14,32 @@
     props: {
       radius: {
         type: Number,
-        default: 100
+        default: 50
       },
       percent: {
         type: Number,
         default: 0
       }
     },
-    data() {
-      return {
-        dashArray: Math.PI * 100
-      }
+    created() {
+      this.dashArray = Math.PI * this.radius * 2
+      this.dashOffset = 0
     },
     computed: {
-      dashOffset() {
-        return (1 - this.percent) * this.dashArray
+    },
+    methods: {
+      _moveCircle(percent) {
+        this.dashOffset = (1 - percent) * this.dashArray
+      }
+    },
+    watch: {
+      percent(v) {
+        this._moveCircle(v)
       }
     }
   }
 </script>
+
 <style scoped lang="stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
 

@@ -1,22 +1,22 @@
 <template>
-  <transition name="slide">
-    <music-list :title="title" :bg-image="bgImage" :songs="songs" @scrollToEnd="onScrollToEnd" :hasMore="hasMore" :noMoreShowFlag="noMoreShowFlag"></music-list>
+  <transition name="slider">
+    <music-list :songs="songs" :title="title" :bgImage="bgImage"></music-list>
   </transition>
 </template>
 
 <script>
-  import MusicList from 'components/music-list/music-list'
   import {mapGetters} from 'vuex'
-  import {getSong} from 'api/singer'
+  import {getSongs} from 'api/songs'
   import {ERR_OK} from 'api/config'
-  import {createSong} from 'common/js/song'
+  import {createSong} from 'common/js/songs'
+  import MusicList from 'components/music-list/music-list'
+
   export default {
     data() {
       return {
         songs: [],
-        songNum: 30,
-        hasMore: false,
-        noMoreShowFlag: false
+        totalSong: 0,
+        startNum: 0
       }
     },
     computed: {
@@ -32,36 +32,29 @@
     },
     created() {
       if (!this.singer.id) {
-        localStorage['referer'] === 'singer' ? this.$router.push('/singer') : this.$router.push('/search')
+        this.$router.push({
+          path: '/singer'
+        })
+
+        return
       }
-      this._getSong()
+      this._getSong(this.singer.id, this.startNum)
     },
     methods: {
-      onScrollToEnd() {
-        if (this.hasMore) {
-          this.songNum += 30
-          this._getSong()
-        }
-      },
-      _getSong() {
-        getSong(this.singer.id, this.songNum).then((res) => {
+      _getSong(singerId, startNum) {
+        getSongs(singerId, startNum).then((res) => {
           if (res.code === ERR_OK) {
-            this.hasMore = true
-            if (this.songs.length === res.data.list.length) {
-              this.hasMore = false
-              this.noMoreShowFlag = true
-            }
-            this.songs = this._normalizeSongs(res.data.list)
+            this.songs = this._normalize(res.data.list)
+            this.totalSong = res.data.total
           }
-        }).catch(() => {
-          console.log('没有更多歌曲')
         })
       },
-      _normalizeSongs(list) {
+      _normalize(songsArr) {
         let ret = []
-        list.forEach((item, index) => {
-          ret.push(createSong(item.musicData))
+        songsArr.forEach((i) => {
+          ret.push(createSong(i.musicData))
         })
+
         return ret
       }
     },
@@ -72,8 +65,8 @@
 </script>
 
 <style lang="stylus">
-  .slide-enter-active, .slide-leave-active
+  .slider-enter-active, .slider-leave-active
     transition: all 0.3s
-  .slide-enter, .slide-leave-to
+  .slider-enter, .slider-leave-to
     transform: translate3d(100%, 0, 0)
 </style>

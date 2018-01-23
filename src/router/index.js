@@ -1,55 +1,23 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-
+// import Recommend from 'components/recommend/recommend'
+const Recommend = () => import('components/recommend/recommend')
+// import Singer from 'components/singer/singer'
+const Singer = () => import('components/singer/singer')
+// import Rank from 'components/rank/rank'
+const Rank = () => import('components/rank/rank')
+// import Search from 'components/search/search'
+const Search = () => import('components/search/search')
+// import SingerDetail from 'components/singer-detail/singer-detail'
+const SingerDetail = () => import('components/singer-detail/singer-detail')
+// import DiscDetail from 'components/disc-detail/disc-detail'
+const DiscDetail = () => import('components/disc-detail/disc-detail')
+// import RankDetail from 'components/rank-detail/rank-detail'
+const RankDetail = () => import('components/rank-detail/rank-detail')
+// import User from 'components/user/user'
+const User = () => import('components/user/user')
 Vue.use(Router)
 
-const Recommend = (resolve) => {
-  import('components/recommend/recommend').then((module) => {
-    resolve(module)
-  })
-}
-
-const Singer = (resolve) => {
-  import('components/singer/singer').then((module) => {
-    resolve(module)
-  })
-}
-
-const Rank = (resolve) => {
-  import('components/rank/rank').then((module) => {
-    resolve(module)
-  })
-}
-
-const Search = (resolve) => {
-  import('components/search/search').then((module) => {
-    resolve(module)
-  })
-}
-
-const SingerDetail = (resolve) => {
-  import('components/singer-detail/singer-detail').then((module) => {
-    resolve(module)
-  })
-}
-
-const Diss = (resolve) => {
-  import('components/diss/diss').then((module) => {
-    resolve(module)
-  })
-}
-
-const TopList = (resolve) => {
-  import('components/top-list/top-list').then((module) => {
-    resolve(module)
-  })
-}
-
-const User = (resolve) => {
-  import('components/user-center/user-center').then((module) => {
-    resolve(module)
-  })
-}
 export default new Router({
   routes: [
     {
@@ -62,7 +30,7 @@ export default new Router({
       children: [
         {
           path: ':id',
-          component: Diss
+          component: DiscDetail
         }
       ]
     },
@@ -82,19 +50,13 @@ export default new Router({
       children: [
         {
           path: ':id',
-          component: TopList
+          component: RankDetail
         }
       ]
     },
     {
       path: '/search',
-      component: Search,
-      children: [
-        {
-          path: ':id',
-          component: SingerDetail
-        }
-      ]
+      component: Search
     },
     {
       path: '/user',

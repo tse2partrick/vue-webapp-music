@@ -1,13 +1,11 @@
 <template>
-  <transition name="confirm-fade">
-    <div class="confirm" v-show="showFlag">
-      <div class="confirm-wrapper">
-        <div class="confirm-content">
-          <p class="text">{{text}}</p>
-          <div class="operate">
-            <div @click.stop="cancel" class="operate-btn left">{{cancelBtnText}}</div>
-            <div @click.stop="confirm" class="operate-btn">{{confirmBtnText}}</div>
-          </div>
+  <transition name="flash">
+    <div class="confirm" v-show="show">
+      <div class="wrapper">
+        <h1 class="title" v-html="title"></h1>
+        <div class="buttons">
+          <div class="btn-sure" @click.stop="onSure">确定</div>
+          <div class="btn-cancel" @click.stop="onCancel">取消</div>
         </div>
       </div>
     </div>
@@ -17,99 +15,64 @@
 <script>
   export default {
     props: {
-      text: {
+      title: {
         type: String,
-        default: ''
+        default: '您确定要？'
       },
-      confirmBtnText: {
-        type: String,
-        default: '确定'
-      },
-      cancelBtnText: {
-        type: String,
-        default: '取消'
-      }
-    },
-    data() {
-      return {
-        showFlag: false
+      show: {
+        type: Boolean,
+        default: false
       }
     },
     methods: {
-      show() {
-        this.showFlag = true
+      onSure() {
+        this.$emit('sure')
       },
-      hide() {
-        this.showFlag = false
-      },
-      cancel() {
-        this.hide()
+      onCancel() {
         this.$emit('cancel')
-      },
-      confirm() {
-        this.hide()
-        this.$emit('confirm')
       }
     }
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+<style lang="stylus" scoped>
   @import "~common/stylus/variable"
-
   .confirm
     position: fixed
-    left: 0
-    right: 0
+    display: flex
     top: 0
-    bottom: 0
-    z-index: 998
-    background-color: $color-background-d
-    &.confirm-fade-enter-active
-      animation: confirm-fadein 0.3s
-      .confirm-content
-        animation: confirm-zoom 0.3s
-    .confirm-wrapper
-      position: absolute
-      top: 50%
-      left: 50%
-      transform: translate(-50%, -50%)
-      z-index: 999
-      .confirm-content
-        width: 270px
-        border-radius: 13px
-        background: $color-highlight-background
-        .text
-          padding: 19px 15px
-          line-height: 22px
-          text-align: center
-          font-size: $font-size-large
-          color: $color-text-l
-        .operate
-          display: flex
-          align-items: center
-          text-align: center
-          font-size: $font-size-large
-          .operate-btn
-            flex: 1
-            line-height: 22px
-            padding: 10px 0
-            border-top: 1px solid $color-background-d
-            color: $color-text-d
-            &.left
-              border-right: 1px solid $color-background-d
-
-  @keyframes confirm-fadein
-    0%
-      opacity: 0
-    100%
-      opacity: 1
-
-  @keyframes confirm-zoom
-    0%
-      transform: scale(0)
-    50%
-      transform: scale(1.1)
-    100%
-      transform: scale(1)
+    left: 0
+    width: 100%
+    height: 100%
+    background: rgba(0, 0, 0, 0.7)
+    z-index: 200
+    .wrapper
+      margin: auto
+      border: 1px solid $color-theme
+      width: 80%
+      padding: 10px 0
+      border-radius: 5px
+      text-align: center
+      .title
+        font-size: $font-size-large
+        padding: 10px 0 20px 0
+      .buttons
+        font-size: $font-size-medium
+        color: $color-theme
+        padding-bottom: 5px
+        .btn-sure
+          display: inline-block
+          padding: 10px
+          border: 1px solid $color-theme
+          border-radius: 5px
+          margin-right: 10px
+        .btn-cancel
+          display: inline-block
+          padding: 10px
+          border: 1px solid $color-theme
+          border-radius: 5px
+  .flash-enter-active, .flash-leave-active
+    transition: all 0.3s
+  .flash-enter, .flash-leave-to
+    transform: scale(0)
 </style>

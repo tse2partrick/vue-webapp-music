@@ -1,105 +1,146 @@
 <template>
   <div class="recommend" ref="recommend">
-    <scroll class="recommend-content" :data="hotDisses" ref="scroll" :probeType="probeType">
+    <scroll ref="scroll" class="recommend-content" :data="recommendList" :probeType="3" :listenScroll="true" @scroll="onScroll" :silentLoad="true" @silentLoad="onSilentLoad" @refreshDone="onRefreshDone">
       <div>
-        <div class="slider-wrapper" v-if="sliders.length > 0">
-          <slider :sliders="sliders">
-            <div v-for="item in sliders">
-              <a :href="item.linkUrl">
-                <img :src="item.picUrl">
-              </a>
-            </div>
-          </slider>
-        </div>
-        <div class="recommend-list">
-          <h2 class="list-title">热门推荐歌单</h2>
-          <div @click="selectDiss(item)" class="item" v-for="item in hotDisses">
-            <img class="icon" v-lazy="item.imgurl">
-            <div class="text">
-              <h2 class="name">{{item.dissname}}</h2>
-              <p class="desc">{{item.creator.name}}</p>
-            </div>
+        <div v-if="sliders.length" class="slider-wrapper">
+          <div class="slider-content">
+            <slider ref="slider">
+              <div v-for="item in sliders">
+                <a :href="item.linkUrl">
+                  <img :src="item.picUrl">
+                </a>
+              </div>
+            </slider>
           </div>
         </div>
-      </div>
-      <div class="loading-container" v-show="!hotDisses.length">
-        <loading></loading>
+        <div class="recommend-list">
+          <h1 class="list-title">全部歌单</h1>
+          <ul>
+            <li class="item" v-for="item in recommendList" @click="onClickDisc(item)">
+              <img class="icon" v-lazy="item.imgurl" />
+              <div class="text">
+                <h2 class="name" v-html="item.dissname"></h2>
+                <p class="desc" v-html="item.creator.name"></p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <no-more v-if="noMore"></no-more>
+        <loading ref="loading" v-show="(!noMore && !recommendList.length) || inLoading"></loading>
       </div>
     </scroll>
+    <go-top v-show="showGoTop" @goTop="onGoTop"></go-top>
     <router-view></router-view>
   </div>
 </template>
 
 <script>
-  import {getSlider, getHotDiss} from 'api/recommend'
+  import {getRecommend, getRecommendList, getDiscDetail} from 'api/recommend'
   import {ERR_OK} from 'api/config'
   import Slider from 'base/slider/slider'
   import Scroll from 'base/scroll/scroll'
+  import NoMore from 'base/no-more/no-more'
+  import GoTop from 'base/go-top/go-top'
   import Loading from 'base/loading/loading'
-  import {playListMixin} from 'common/js/mixins'
   import {mapMutations} from 'vuex'
+  import {playingMixin} from 'common/js/mixin'
+
   export default {
-    mixins: [playListMixin],
+    mixins: [playingMixin],
     data() {
       return {
         sliders: [],
-        hotDisses: [],
-        allReady: -1,
-        probeType: 3
+        recommendList: [],
+        sin: 0,
+        ein: 29,
+        sum: null,
+        scrollY: 0,
+        inLoading: false,
+        noMore: false
       }
     },
     created() {
-      this._getSlider()
-      setTimeout(() => {
-        this._getHotDiss()
-      }, 1000)
-
-      this.scroll = {}
+      this._getRecommend()
+      this._getRecommendList(this.sin, this.ein)
+    },
+    computed: {
+      showGoTop() {
+        return this.scrollY <= -(window.innerHeight * 2) ? 1 : 0
+      }
     },
     methods: {
-      selectDiss(item) {
+      onClickDisc(item) {
+        this._getDiscDetail(item.dissid)
         this.$router.push({
           path: `/recommend/${item.dissid}`
         })
-        this.setDiss(item)
       },
-      playListHandler(playList) {
-        let bottom = playList.length > 0 ? '60px' : ''
-        this.$refs.recommend.style.bottom = bottom
-        this.$refs.scroll.refresh()
+      onGoTop() {
+        this.$refs.scroll._scrollTo(0, 0)
+        this.scrollY = 0
       },
-      _getSlider() {
-        getSlider().then((res) => {
+      onRefreshDone() {
+        this.inLoading = false
+      },
+      onSilentLoad() {
+        if (this.inLoading || this.noMore) {
+          return
+        }
+
+        this.inLoading = true
+        this._getRecommendList(this.sin, this.ein)
+      },
+      onScroll(pos) {
+        this.scrollY = pos.y
+      },
+      _getRecommend() {
+        getRecommend().then((res) => {
           if (res.code === ERR_OK) {
             this.sliders = res.data.slider
-            this.allReady += 1
           }
         })
       },
-      _getHotDiss() {
-        getHotDiss().then((res) => {
+      _getRecommendList(sin, ein) {
+        getRecommendList(sin, ein).then((res) => {
           if (res.code === ERR_OK) {
-            this.hotDisses = res.data.list
-            this.allReady += 1
+            if (!this.recommendList.length) {
+              this.recommendList = res.data.list
+            } else {
+              res.data.list.forEach((item) => {
+                this.recommendList.push(item)
+              })
+            }
+            this.sin = this.ein + 1
+            this.ein = this.sin + 29
+            if (this.sum !== res.data.sum) {
+              this.sum = res.data.sum
+            }
+            if (this.ein >= this.sum) {
+              this.noMore = true
+            }
           }
         })
+      },
+      _getDiscDetail(dissid) {
+        getDiscDetail(dissid).then((res) => {
+          if (res.code === ERR_OK) {
+            this.setDisc(res.cdlist[0])
+          }
+        })
+      },
+      _calcView(sequenceList) {
+        this.$refs.recommend.style.bottom = sequenceList.length > 0 ? '60px' : ''
+        this.$refs.scroll._refresh()
       },
       ...mapMutations({
-        'setDiss': 'SET_DISS'
+        'setDisc': 'SET_DISC'
       })
-    },
-    watch: {
-      allReady(val) {
-        if (val === 1) {
-          setTimeout(() => {
-            this.$refs.scroll.refresh()
-          }, 1000)
-        }
-      }
     },
     components: {
       Slider,
       Scroll,
+      NoMore,
+      GoTop,
       Loading
     }
   }
@@ -119,7 +160,15 @@
       .slider-wrapper
         position: relative
         width: 100%
+        height: 0
+        padding-top: 40%
         overflow: hidden
+        .slider-content
+          position: absolute
+          top: 0
+          left: 0
+          width: 100%
+          height: 100%
       .recommend-list
         .list-title
           height: 65px

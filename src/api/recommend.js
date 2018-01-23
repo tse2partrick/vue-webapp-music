@@ -1,43 +1,18 @@
-import jsonp from 'common/js/jsonp'
-import {commonParams, options} from './config'
 import axios from 'axios'
+import jsonp from 'common/js/jsonp'
 
-export function getSlider() {
-  const url = 'https://c.y.qq.com/musichall/fcgi-bin/fcg_yqqhomepagerecommend.fcg'
+export function getRecommend() {
+  const url = '/api/getRecommend'
 
-  const data = Object.assign({}, commonParams, {
-    platform: 'h5',
+  const data = Object.assign({}, {
+    g_tk: 5381,
     uin: 0,
-    needNewCode: 1
-  })
-
-  return jsonp(url, data, options)
-}
-
-export function getHotDiss() {
-  // let url = 'https://c.y.qq.com/v8/fcg-bin/fcg_first_yqq.fcg'
-
-  /* let data = Object.assign({}, commonParams, {
-    tpl: 'v12',
-    page: 'other',
-    loginUin: 0,
-    hostUin: 0,
+    inCharset: 'utf-8',
+    outCharset: 'utf-8',
     notice: 0,
-    platform: 'yqq',
-    needNewCode: 0
-  }) */
-
-  let url = '/api/hotDiss'
-  let data = Object.assign({}, commonParams, {
-    platform: 'yqq',
-    hostUin: 0,
-    sin: 0,
-    ein: 29,
-    sortId: 5,
-    needNewCode: 0,
-    categoryId: 10000000,
-    rnd: Math.random(),
-    format: 'json'
+    platform: 'h5',
+    needNewCode: 1,
+    _: new Date().getTime()
   })
 
   return axios.get(url, {
@@ -47,16 +22,48 @@ export function getHotDiss() {
   })
 }
 
-export function getDissInfo(dissId) {
-  let url = 'https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg'
-  let data = Object.assign({}, {
+export function getRecommendList(start, end) {
+  // const url = 'https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_diss_by_tag.fcg'
+  const url = '/api/getRecommendList'
+  const data = Object.assign({}, {
+    picmid: 1,
+    rnd: Math.random(),
+    g_tk: 5381,
+    jsonpCallback: 'getPlaylist',
+    loginUin: 0,
+    hostUin: 0,
+    format: 'jsonp',
+    inCharset: 'utf8',
+    outCharset: 'utf-8',
+    notice: 0,
+    platform: 'yqq',
+    needNewCode: 0,
+    categoryId: 10000000,
+    sortId: 5,
+    sin: start,
+    ein: end
+  })
+
+  /* return axios.get(url, {
+    params: data
+  }).then((res) => {
+    return Promise.resolve(res.data)
+  }) */
+
+  return jsonp(url, data)
+}
+
+export function getDiscDetail(discId) {
+  const url = '/api/getDiscDetail'
+  const data = Object.assign({}, {
     type: 1,
     json: 1,
     utf8: 1,
     onlysong: 0,
-    disstid: dissId,
+    disstid: discId,
     format: 'jsonp',
     g_tk: 5381,
+    jsonpCallback: 'playlistinfoCallback',
     loginUin: 0,
     hostUin: 0,
     inCharset: 'utf8',
@@ -65,11 +72,6 @@ export function getDissInfo(dissId) {
     platform: 'yqq',
     needNewCode: 0
   })
-  let opts = {
-    param: 'jsonpCallback',
-    prefix: '',
-    name: 'playlistinfoCallback'
-  }
 
-  return jsonp(url, data, opts)
+  return jsonp(url, data)
 }

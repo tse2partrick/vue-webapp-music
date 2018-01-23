@@ -6,89 +6,117 @@
 
 <script>
   import BScroll from 'better-scroll'
+  const DIRECTION_V = 'vetical'
+  const DIRECTION_H = 'horizontal'
+
   export default {
     props: {
-      data: {
-        type: Array,
-        default: []
-      },
       probeType: {
         type: Number,
         default: 1
       },
       click: {
         type: Boolean,
-        default: true
+        default: false
       },
       listenScroll: {
         type: Boolean,
         default: false
       },
-      pullUp: {
+      data: {
+        type: Array,
+        default: []
+      },
+      refreshDelay: {
+        type: Number,
+        default: 20
+      },
+      beforeScroll: {
         type: Boolean,
         default: false
       },
-      listenBeforeScroll: {
+      direction: {
+        type: String,
+        default: DIRECTION_V
+      },
+      silentLoad: {
+        type: Boolean,
+        default: false
+      },
+      silentLoadRange: {
+        type: Number,
+        default: 200
+      },
+      pullUp: {
         type: Boolean,
         default: true
-      },
-      refreshTime: {
-        type: Number,
-        default: 20
       }
     },
     mounted() {
-      this._initScroll()
+      setTimeout(() => {
+        this.initScroll()
+      }, 20)
     },
     methods: {
-      _initScroll() {
+      initScroll() {
+        if (!this.$refs.wrapper) {
+          return
+        }
+
         this.scroll = new BScroll(this.$refs.wrapper, {
           probeType: this.probeType,
-          click: this.click
+          click: this.click,
+          eventPassthrough: this.direction === DIRECTION_V ? DIRECTION_H : DIRECTION_V
         })
 
         if (this.listenScroll) {
-          const me = this
           this.scroll.on('scroll', (pos) => {
-            me.$emit('scroll', pos)
+            this.$emit('scroll', pos)
+
+            if (this.silentLoad) {
+              if (this.scroll.y <= this.scroll.maxScrollY + this.silentLoadRange) {
+                this.$emit('silentLoad')
+              }
+            }
           })
         }
 
         if (this.pullUp) {
           this.scroll.on('scrollEnd', () => {
-            if (this.scroll.y <= this.scroll.maxScrollY + 50) {
+            if (this.scroll.y <= (this.scroll.maxScrollY + 50)) {
               this.$emit('scrollToEnd')
             }
           })
         }
 
-        if (this.listenBeforeScroll) {
+        if (this.beforeScroll) {
           this.scroll.on('beforeScrollStart', () => {
             this.$emit('beforeScrollStart')
           })
         }
       },
-      enable() {
+      _enable() {
         this.scroll && this.scroll.enable()
       },
-      disable() {
+      _disable() {
         this.scroll && this.scroll.disable()
       },
-      refresh() {
-        this.scroll && this.scroll.refresh()
-      },
-      scrollTo() {
+      _scrollTo() {
         this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
       },
-      scrollToElement() {
+      _scrollToElement() {
         this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+      },
+      _refresh() {
+        this.scroll && this.scroll.refresh()
       }
     },
     watch: {
       data() {
         setTimeout(() => {
-          this.refresh()
-        }, this.refreshTime)
+          this._refresh()
+          this.$emit('refreshDone')
+        }, this.refreshDelay)
       }
     }
   }

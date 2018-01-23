@@ -1,67 +1,42 @@
 <template>
   <div class="song-list">
     <ul>
-      <li class="item" v-for="(song, index) in songs" @click="selectItem(song, index)">
-        <ul class="rank" v-if="isTopList">
-          <li :class="topIcon(index)">
-            <span v-if="index > 2">{{index + 1}}</span>
-          </li>
-        </ul>
+      <li @click="selectItem(song, index)" class="item" v-for="(song, index) in songs">
+        <div class="rank" v-show="rankPage">
+          <i class="icon" :class="getIcon(index)" v-show="index < 3"></i>
+          <span class="text" v-show="index >= 3">{{index}}</span>
+        </div>
         <div class="content">
-          <h2 class="name" v-html="song.songname"></h2>
-          <span class="desc" v-html="getDesc(song)"></span>
+          <h2 class="name" v-html="song.songName"></h2>
+          <p class="desc">{{getDesc(song)}}</p>
         </div>
       </li>
-      <loading v-show="hasMore && !isTopList"></loading>
-      <li class="item-no-more" v-show="!hasMore && noMoreShowFlag">没有更多了</li>
     </ul>
   </div>
 </template>
 
 <script>
-  import {mapGetters} from 'vuex'
-  import Loading from 'base/loading/loading'
   export default {
     props: {
+      rankPage: {
+        type: Boolean,
+        default: false
+      },
       songs: {
         type: Array,
         default: []
-      },
-      isTopList: {
-        type: Boolean,
-        default: false
-      },
-      hasMore: {
-        type: Boolean,
-        default: false
-      },
-      noMoreShowFlag: {
-        type: Boolean,
-        default: false
       }
-    },
-    computed: {
-      ...mapGetters([
-        'topList'
-      ])
     },
     methods: {
-      topIcon(index) {
-        if (index <= 2) {
-          return `icon icon${index}`
-        } else {
-          return 'text'
-        }
-      },
-      getDesc(song) {
-        return `${song.singer} . ${song.albumname}`
+      getIcon(index) {
+        return `icon${index}`
       },
       selectItem(song, index) {
-        this.$emit('selectItemPlay', song, index)
+        this.$emit('selectSong', song, index)
+      },
+      getDesc(song) {
+        return song.singer + ' . ' + song.albumName
       }
-    },
-    components: {
-      Loading
     }
   }
 </script>
@@ -107,11 +82,4 @@
           no-wrap()
           margin-top: 4px
           color: $color-text-d
-    .item-no-more
-      box-sizing: border-box
-      height: 64px
-      font-size: $font-size-medium
-      color: $color-text-d
-      margin-top: 30px
-      text-align: center
 </style>

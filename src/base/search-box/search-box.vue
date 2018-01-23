@@ -1,73 +1,121 @@
 <template>
-  <div class="search-box" @click="_focus">
-    <i class="icon-search"></i>
-    <input type="text" class="box" v-model="query" :placeholder="placeholder" ref="box">
-    <i class="icon-dismiss" v-show="query" @click="clear"></i>
+  <div class="search-box">
+    <div class="box-wrapper" @click="onReadyInput">
+      <div class="icon-left">
+        <i class="icon-search"></i>
+      </div>
+      <div class="content">
+        <input type="text" class="text" ref="text" @input="onTyping" :placeholder="tip" />
+      </div>
+      <div class="icon-right" v-show="content.length" @click.stop='onCancelContent'>
+        <i class="icon-dismiss"></i>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-  import {debounce} from 'common/js/search'
   export default {
     props: {
-      placeholder: {
-        types: String,
-        default: '请输入歌手、歌名搜索'
+      searchKey: {
+        type: String,
+        default: ''
+      },
+      unFocus: {
+        type: Boolean,
+        default: false
       }
     },
     data() {
       return {
-        query: ''
+        content: '',
+        tip: '输入歌手或歌曲名'
       }
     },
     methods: {
-      blur() {
-        this.$refs.box.blur()
+      onReadyInput() {
+        this._onFocus()
       },
-      addQuery(query) {
-        this.query = query
+      onCancelContent() {
+        this.$refs.text.value = ''
+        this.content = ''
+        // this._onFocus()
+        this.$emit('onFocus')
       },
-      clear() {
-        this.query = ''
-        this.$emit('clear')
+      onTyping() {
+        clearTimeout(this.typeTimer)
+        this.typeTimer = setTimeout(() => {
+          this.content = this.$refs.text.value
+        }, 300)
       },
-      _focus() {
-        this.$refs.box.focus()
+      _onFocus() {
+        this.$refs.text.focus()
+        this.$emit('onFocus')
       }
     },
-    created() {
-      this.$watch('query', debounce((newQuery) => {
-        this.$emit('query', newQuery)
-      }, 300))
+    watch: {
+      content(v) {
+        if (v && v.length) {
+          this.$emit('search', this.content)
+        }
+
+        if (!v) {
+          this.$emit('noneContent')
+        }
+      },
+      searchKey(v) {
+        this.content = v
+        this.$refs.text.value = v
+      },
+      unFocus(v) {
+        if (v) {
+          this.$refs.text.blur()
+        }
+      }
     }
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
-  @import "~common/stylus/variable"
+<style lang="stylus" scoped>
+  @import '~common/stylus/variable'
 
   .search-box
-    display: flex
-    align-items: center
-    box-sizing: border-box
-    width: 100%
-    padding: 0 6px
-    height: 40px
-    background: $color-highlight-background
-    border-radius: 6px
-    .icon-search
-      font-size: 24px
-      color: $color-background
-    .box
-      flex: 1
-      margin: 0 5px
-      line-height: 18px
+    width: 85%
+    margin: 0 auto
+    .box-wrapper
+      position: relative
+      width: 100%
+      height: 30px
       background: $color-highlight-background
-      color: $color-text
-      font-size: $font-size-medium
-      &::placeholder
-        color: $color-text-d
-    .icon-dismiss
-      font-size: 16px
-      color: $color-background
+      color: $color-background-d
+      padding: 5px 0
+      border-radius: 5px
+      .icon-left
+        display: inline-block
+        width: 10%
+        height: 100%
+        line-height: 30px
+        vertical-align: top
+        text-align: center
+        font-size: $font-size-large-x
+      .content
+        display: inline-block
+        width: 80%
+        height: 100%
+        line-height: 30px
+        vertical-align: top
+        .text
+          background: $color-highlight-background
+          color: $color-text-ll
+          width: 100%
+          outline: none
+      .icon-right
+        position: absolute
+        display: inline-block
+        left: 90%
+        width: 10%
+        height: 30px
+        line-height: 30px
+        vertical-align: top
+        text-align: center
 </style>

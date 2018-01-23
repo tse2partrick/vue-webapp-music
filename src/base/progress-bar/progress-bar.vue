@@ -1,90 +1,74 @@
 <template>
-  <div class="progress-bar" ref="progressBar" @click.stop.prevent="onClick">
+  <div class="progress-bar" ref="progressBar" @click="clickBar">
     <div class="bar-inner">
       <div class="progress" ref="progress"></div>
-      <div class="progress-btn-wrapper" ref="progressBtn">
-        <div class="progress-btn" @touchstart.stop.prevent="onTouchStart" @touchmove.stop.prevent="onTouchMove" @touchend="onTouchEnd"></div>
+      <div class="progress-btn-wrapper" ref="progressBtn" @touchstart.stop="onTouchstart" @touchmove.stop="onTouchmove" @touchend.stop="onTouchend">
+        <button class="progress-btn" ref="btn"></button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import {prefixStyle} from 'common/js/dom'
-  import {mapGetters} from 'vuex'
-
-  const transform = prefixStyle('transform')
-  const BTN_WIDTH = 16
   export default {
     props: {
       percent: {
         type: Number,
         default: 0
-      },
-      fileLoaded: {
-        type: Boolean,
-        default: false
       }
     },
-    created() {
-      this.touch = {}
-    },
-    computed: {
-      ...mapGetters([
-        'fullScreen'
-      ])
+    mounted() {
+      this.progressBarWidth = this.$refs.progressBar.clientWidth
+      this.btnWidth = this.$refs.btn.clientWidth
     },
     methods: {
-      progressMove(percent) {
-        let offsetLeft = percent * (this.$refs.progressBar.clientWidth - BTN_WIDTH)
-        this.$refs.progress.style.width = offsetLeft + 'px'
-        this.$refs.progressBtn.style[transform] = `translate3d(${offsetLeft}px, 0, 0)`
+      clickBar(e) {
+        let percent = (e.pageX - this.$refs.progressBar.getBoundingClientRect().left) / this.$refs.progressBar.clientWidth
+        this._moveProgress(percent)
+        this.$emit('clickBar', percent)
       },
-      onClick(e) {
-        if (!this.fileLoaded) {
+      onTouchstart(e) {
+        this.starting = true
+      },
+      onTouchmove(e) {
+        if (!this.starting) {
           return
         }
-        let x = e.pageX - this.$refs.progressBar.getBoundingClientRect().left
-        let offsetWidth = Math.max(0, Math.min(this.$refs.progressBar.clientWidth - BTN_WIDTH, x))
-        this.touch.percent = offsetWidth / (this.$refs.progressBar.clientWidth - BTN_WIDTH)
-        this._scrollTo(offsetWidth)
-        this._triggerMove(this.touch.percent)
+        this.moving = true
+        this.movePercent = (e.touches[0].pageX - this.$refs.progressBar.getBoundingClientRect().left) / this.$refs.progressBar.clientWidth
+        if (this.movePercent <= 0) {
+          this.movePercent = 0
+        } else if (this.movePercent >= 1) {
+          this.movePercent = 1
+        }
+        this._moveProgress(this.movePercent)
+        this.$emit('moving', this.movePercent)
       },
-      onTouchStart(e) {
-        if (!this.fileLoaded) {
+      onTouchend() {
+        if (!this.moving) {
           return
         }
-        this.touch.initiated = true
-        this.touch.x1 = e.touches[0].pageX
-        this.touch.left = this.$refs.progress.clientWidth
+        this.$emit('moveEnd', this.movePercent)
+        this.starting = false
+        this.moving = false
       },
-      onTouchMove(e) {
-        if (!this.touch.initiated) {
+      _moveProgress(v) {
+        if (v < 0 || v > 1) {
           return
         }
-        let x2 = e.touches[0].pageX - this.touch.x1
-        let offsetWidth = Math.max(0, Math.min(this.$refs.progressBar.clientWidth - BTN_WIDTH, x2 + this.touch.left))
-        this.touch.percent = offsetWidth / (this.$refs.progressBar.clientWidth - BTN_WIDTH)
-        this._scrollTo(offsetWidth)
-        this.$emit('changing', this.touch.percent)
-      },
-      onTouchEnd() {
-        this._triggerMove(this.touch.percent)
-      },
-      _scrollTo(offsetWidth) {
-        this.$refs.progress.style.width = offsetWidth + 'px'
-        this.$refs.progressBtn.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
-      },
-      _triggerMove(percent) {
-        this.$emit('progressMove', percent)
+        let pWidth = this.$refs.progressBar.clientWidth || this.progressBarWidth
+        let bWidth = this.$refs.btn.clientWidth || this.btnWidth
+        let percent = (pWidth - bWidth) * v
+        this.$refs.progress.style.width = percent + 'px'
+        this.$refs.progressBtn.style.transform = `translate3d(${percent}px, 0, 0)`
       }
     },
     watch: {
-      percent(newPercent) {
-        this.progressMove(newPercent)
-      },
-      fullScreen() {
-        this.progressMove(this.percent)
+      percent(v) {
+        if (this.moving) {
+          return
+        }
+        this._moveProgress(v)
       }
     }
   }
@@ -112,7 +96,7 @@
         height: 30px
         .progress-btn
           position: relative
-          top: 7px
+          top: 5px
           left: 7px
           box-sizing: border-box
           width: 16px

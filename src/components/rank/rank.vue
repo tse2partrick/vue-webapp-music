@@ -1,21 +1,17 @@
 <template>
   <div class="rank" ref="rank">
-    <scroll class="toplist" :data="topList" ref="topList">
-      <ul>
-        <li class="item" v-for="items in topList" @click="selectList(items)">
-          <div class="icon">
-            <img width="100" height="100" :src="items.picUrl" />
-          </div>
-          <ul class="songlist">
-            <li v-for="(item, index) in items.songList" class="song">
-              <span>{{index + 1}}</span>
-              <span>{{item.singername}}--{{item.songname}}</span>
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <div class="loading-container" v-show="!this.topList.length">
-        <loading></loading>
+    <scroll ref="scroll" class="box-wrapper" :data="QTopList.List" v-if="QTopList.List">
+      <div>
+        <ul class="qt">
+          <li v-for="item in QTopList.List" class="rank-wrapper" @click="onSelectItem(item)">
+            <div class="image">
+              <img width="100%" height="100%" v-lazy="item.pic_v12" />  
+            </div>
+            <ul class="rank-content">
+              <li class="song" v-for="(song, index) in item.songlist">{{normalizeSong(song, index)}}</li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </scroll>
     <router-view></router-view>
@@ -23,92 +19,97 @@
 </template>
 
 <script>
-  import {getTopList} from 'api/rank'
-  import {ERR_OK} from 'api/config'
+  import {getRankList, getRankDetail} from 'api/rank'
   import Scroll from 'base/scroll/scroll'
-  import {playListMixin} from 'common/js/mixins'
-  import Loading from 'base/loading/loading'
+  import {ERR_OK} from 'api/config'
   import {mapMutations} from 'vuex'
+  import {playingMixin} from 'common/js/mixin'
+
   export default {
-    mixins: [playListMixin],
+    mixins: [playingMixin],
     data() {
       return {
-        topList: []
+        QTopList: []
       }
     },
     created() {
-      this._getTopList()
+      this._getRankList()
+      this.lastTopId = -1
     },
     methods: {
-      selectList(item) {
+      onSelectItem(item) {
+        if (this.lastTopId !== item.topID) {
+          this.setTopList([])
+          this._getRankDetail(item.topID)
+          this.setDisc(item)
+        }
+
         this.$router.push({
-          path: `/rank/${item.id}`
+          path: `/rank/${item.topID}`
         })
-        this.setTopList(item)
       },
-      playListHandler(playList) {
-        let bottom = playList.length > 0 ? '60px' : ''
-        this.$refs.rank.style.bottom = bottom
-        this.$refs.topList.refresh()
+      normalizeSong(song, index) {
+        index += 1
+        return `${index}. ${song.singername} - ${song.songname}`
       },
-      _getTopList() {
-        getTopList().then((res) => {
+      _getRankDetail(topid) {
+        getRankDetail(topid).then((res) => {
           if (res.code === ERR_OK) {
-            this.topList = res.data.topList
+            this.setTopList(res.songlist)
+            this.lastTopId = topid
           }
         })
       },
+      _getRankList() {
+        getRankList().then((res) => {
+          this.QTopList = res[0]
+        })
+      },
+      _calcView(sequenceList) {
+        this.$refs.rank.style.bottom = sequenceList.length > 0 ? '60px' : ''
+        if (this.$refs.scroll) {
+          this.$refs.scroll._refresh()
+        }
+      },
       ...mapMutations({
-        'setTopList': 'SET_TOP_LIST'
+        'setTopList': 'SET_TOP_LIST',
+        'setDisc': 'SET_DISC'
       })
     },
     components: {
-      Scroll,
-      Loading
+      Scroll
     }
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
-  @import "~common/stylus/variable"
-  @import "~common/stylus/mixin"
+<style lang="stylus" scoped>
+  @import '~common/stylus/variable'
 
   .rank
     position: fixed
-    width: 100%
     top: 88px
     bottom: 0
-    .toplist
+    width: 100%
+    .box-wrapper
+      width: 100%
       height: 100%
       overflow: hidden
-      .item
-        display: flex
-        margin: 0 20px
-        padding-top: 20px
-        height: 100px
-        &:last-child
-          padding-bottom: 20px
-        .icon
-          flex: 0 0 100px
-          width: 100px
-          height: 100px
-        .songlist
-          flex: 1
-          display: flex
-          flex-direction: column
-          justify-content: center
-          padding: 0 20px
-          height: 100px
-          overflow: hidden
-          background: $color-highlight-background
-          color: $color-text-d
-          font-size: $font-size-small
-          .song
-            no-wrap()
-            line-height: 26px
-      .loading-container
-        position: absolute
-        width: 100%
-        top: 50%
-        transform: translateY(-50%)
+      .qt
+        .rank-wrapper
+          padding: 10px 20px
+          .image
+            display: inline-block
+            width: 25%
+          .rank-content
+            display: inline-block
+            vertical-align: top
+            padding: 0 5px 5px 5px
+            width: 70%
+            .song
+              font-size: $font-size-medium
+              color: $color-text-l
+              padding-bottom: 7px
+              text-overflow: ellipsis
+              overflow: hidden
+              white-space: nowrap
 </style>

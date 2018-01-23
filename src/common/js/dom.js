@@ -8,49 +8,24 @@ export function addClass(el, className) {
   el.className = newClass.join(' ')
 }
 
+export function removeClass(el, className) {
+  if (!hasClass(el, className)) {
+    return
+  }
+
+  let classes = el.className.split(' ')
+  let i = classes.findIndex((item) => {
+    return item === className
+  })
+
+  if (i >= 0) {
+    classes.splice(i, 1)
+  }
+
+  el.className = classes.join(' ')
+}
+
 export function hasClass(el, className) {
   let reg = new RegExp('(^|\\s)' + className + '(\\s|$)')
-
   return reg.test(el.className)
-}
-
-const div = document.createElement('div')
-
-const vendor = (() => {
-  let map = {
-    webkit: 'webkitTransform',
-    moz: 'MozTransform',
-    o: 'OTransform',
-    ms: 'msTransform',
-    standard: 'transform'
-  }
-
-  for (let key in map) {
-    let value = map[key]
-    if (div.style[value] !== undefined) {
-      return key
-    }
-  }
-
-  return false
-})()
-
-export function prefixStyle(el) {
-  if (vendor === false) {
-    return false
-  }
-
-  if (vendor === 'standard') {
-    return el
-  }
-
-  return vendor + el.charAt(0).toUpperCase() + el.substr(1)
-}
-
-export function getData(el, name, val) {
-  const prefix = 'data-'
-  if (val) {
-    return el.setAttribute(prefix + name, val)
-  }
-  return el.getAttribute(prefix + name)
 }

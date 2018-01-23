@@ -1,16 +1,16 @@
 <template>
   <div class="loading">
-    <img src="./loading.gif" width="24" height="24">
-    <span class="desc">{{title}}</span>
+    <img width="24" height="24" src="./loading.gif" />
+    <p class="desc">{{text}}</p>
   </div>
 </template>
 
 <script>
   export default {
     props: {
-      title: {
+      text: {
         type: String,
-        default: '正在加载中...'
+        default: '内容加载中'
       }
     }
   }

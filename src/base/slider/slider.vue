@@ -1,10 +1,11 @@
 <template>
   <div class="slider" ref="slider">
     <div class="slider-group" ref="sliderGroup">
-      <slot></slot>
+      <slot>
+      </slot>
     </div>
     <div class="dots">
-      <div class="dot" v-for="(item, index) in dots" :class="{'active': currentIndex === index}"></div>
+      <span class="dot" :class="{active: currentPageIndex === index}" v-for="(item, index) in dots"></span>
     </div>
   </div>
 </template>
@@ -12,12 +13,9 @@
 <script>
   import {addClass} from 'common/js/dom'
   import BScroll from 'better-scroll'
+
   export default {
     props: {
-      sliders: {
-        type: Array,
-        default: []
-      },
       loop: {
         type: Boolean,
         default: true
@@ -28,98 +26,126 @@
       },
       interval: {
         type: Number,
-        default: 2000
+        default: 4000
       }
     },
     data() {
       return {
         dots: [],
-        currentIndex: 0
+        currentPageIndex: 0
       }
     },
     mounted() {
-      this._initSlider()
-      this._initDots()
-      this._initScroll()
+      setTimeout(() => {
+        this._setSliderWidth()
+        this._initDots()
+        this._initSlider()
 
-      if (this.autoPlay) {
-        this._autoPlay()
-      }
+        if (this.autoPlay) {
+          this._play()
+        }
+      }, 20)
 
       window.addEventListener('resize', () => {
-        this._initSlider(true)
-        this.scroll.refresh()
+        if (!this.slider) {
+          return
+        }
+
+        clearTimeout(this.resizeTimer)
+        this.resizeTimer = setTimeout(() => {
+          if (this.slider.isInTransition) {
+            this.slider._scrollEnd()
+          } else {
+            if (this.autoPlay) {
+              this._play()
+            }
+          }
+          this.refresh()
+        }, 20)
       })
     },
+    activated() {
+      this.slider.enable()
+      let page = this.slider.getCurrentPage().pageX
+      this.currentPageIndex = page
+      this.slider.goToPage(page, 0, 0)
+      if (this.autoPlay) {
+        this._play()
+      }
+    },
+    deactivated() {
+      this.slider.disable()
+      clearTimeout(this.timer)
+    },
+    beforeDestroy() {
+      this.slider.disable()
+      clearTimeout(this.timer)
+    },
     methods: {
-      _initSlider(isResize) {
+      refresh() {
+        this._setSliderWidth(true)
+        this.slider.refresh()
+      },
+      _setSliderWidth(isResize) {
+        let sliderWidth = this.$refs.slider.clientWidth
+        let width = 0
         this.children = this.$refs.sliderGroup.children
-        let totalWidth = 0
-        let everyWidth = this.$refs.slider.clientWidth
 
         for (let i = 0; i < this.children.length; i++) {
           let child = this.children[i]
           addClass(child, 'slider-item')
-          child.style.width = everyWidth + 'px'
-          totalWidth += everyWidth
+
+          child.style.width = sliderWidth + 'px'
+          width += sliderWidth
         }
 
         if (this.loop && !isResize) {
-          totalWidth += 2 * everyWidth
+          width += 2 * sliderWidth
         }
 
-        this.$refs.sliderGroup.style.width = totalWidth + 'px'
+        this.$refs.sliderGroup.style.width = width + 'px'
       },
       _initDots() {
         this.dots = new Array(this.children.length)
       },
-      _autoPlay() {
-        let index = this.currentIndex + 1
-
-        if (this.loop) {
-          index += 1
-        }
-        this.timer = setTimeout(() => {
-          this.scroll.goToPage(index, 0, 400)
-        }, this.interval)
-      },
-      _initScroll() {
-        this.scroll = new BScroll(this.$refs.slider, {
+      _initSlider() {
+        this.slider = new BScroll(this.$refs.slider, {
           scrollX: true,
           scrollY: false,
           momentum: false,
-          snap: true,
-          snapLoop: this.loop,
-          snapSpeed: 400,
-          snapTheasold: 0.3,
-          click: true
-        })
-
-        this.scroll.on('scrollEnd', () => {
-          let index = this.scroll.getCurrentPage().pageX
-
-          if (this.loop) {
-            index -= 1
-          }
-
-          this.currentIndex = index
-
-          if (this.autoPlay) {
-            clearTimeout(this.timer)
-            this._autoPlay()
+          snap: {
+            loop: this.loop,
+            threshold: 0.3,
+            speed: 400
           }
         })
 
-        this.scroll.on('beforeScrollStart', () => {
+        this.slider.on('scrollEnd', this._scrollEnd)
+
+        this.slider.on('beforeScrollStart', () => {
           if (this.autoPlay) {
             clearTimeout(this.timer)
           }
         })
-      }
-    },
-    watch: {
-      sliders() {
-        this.scroll.refresh()
+
+        this.slider.on('touchend', () => {
+          if (this.autoPlay) {
+            this._play()
+          }
+        })
+      },
+      _scrollEnd() {
+        let page = this.slider.getCurrentPage().pageX
+        this.currentPageIndex = page
+        if (this.autoPlay) {
+          this._play()
+        }
+      },
+      _play() {
+        clearTimeout(this.timer)
+        this.timer = setTimeout(() => {
+          this.slider.next()
+        }, this.interval)
       }
     }
   }
@@ -152,6 +178,7 @@
       right: 0
       left: 0
       bottom: 12px
+      transform: translateZ(1px)
       text-align: center
       font-size: 0
       .dot
