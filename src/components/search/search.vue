@@ -123,6 +123,10 @@
         })
       },
       onScrollToEnd() {
+        if (this.searching) {
+          console.log('seaching ...')
+          return
+        }
         if (this.page <= this.totalPage) {
           this.isMoreSearch = true
           this.searching = true
