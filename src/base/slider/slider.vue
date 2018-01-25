@@ -223,7 +223,6 @@
             this.touch.x = this.sliderArr[this.touch.page]
             this.touch.lastX = -this.touch.x
           }
-          console.log(this.touch.page + ' - ' + this.sliderArr.length)
           this._sliderMove(this.touch.page)
         }, this.interval)
       }

@@ -67,13 +67,13 @@
             <div class="icon i-left">
               <i :class="getIconMode" @click="changeMode"></i>
             </div>
-            <div class="icon i-left">
+            <div class="icon i-left" :class="disableCls">
               <i class="icon-prev" @click="prevSong"></i>
             </div>
             <div class="icon i-center">
               <i :class="getIconPlayCls" @click="togglePlay"></i>
             </div>
-            <div class="icon i-right">
+            <div class="icon i-right" :class="disableCls">
               <i class="icon-next" @click="nextSong"></i>
             </div>
             <div class="icon i-right">
@@ -140,7 +140,8 @@
         middlePos: {},
         quicking: false,
         playlistShow: false,
-        isFavorite: false
+        isFavorite: false,
+        songReady: false
       }
     },
     beforeDestroyed() {
@@ -151,6 +152,9 @@
       clearTimeout(this.scaleTimer3)
     },
     computed: {
+      disableCls() {
+        return this.songReady ? '' : 'disable'
+      },
       getIconMiniCls() {
         return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
       },
@@ -384,6 +388,10 @@
         this.setCurrentIndex(index)
       },
       prevSong() {
+        if (!this.songReady) {
+          return
+        }
+        this.songReady = false
         let index = this.currentIndex - 1
 
         if (index < 0) {
@@ -393,6 +401,10 @@
         this.setCurrentIndex(index)
       },
       nextSong() {
+        if (!this.songReady) {
+          return
+        }
+        this.songReady = false
         let index = this.currentIndex + 1
 
         if (index > this.sequenceList.length - 1) {
@@ -452,7 +464,13 @@
         }
       },
       onCanPlay() {
-        this.$refs.audio.play()
+        setTimeout(() => {
+          this.songReady = true
+          this.refresh()
+          this._getLyric(this.currentSong.songId)
+          this.checkFavorite()
+          this.$refs.audio.play()
+        }, 300)
       },
       togglePlay() {
         this.playing ? this.setPlaying(false) : this.setPlaying(true)
@@ -744,7 +762,6 @@
           this.setPlaying(true)
         }
         this.refresh()
-        this._getLyric(newSong.songId)
         this.checkFavorite()
       },
       currentTime() {
